@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LILA BLACK — Level Designer Telemetry</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="app">
+
+<!-- ══ HEADER ════════════════════════════════════════════════════════════════════ -->
+<header>
+  <div class="h-logo">
+    <div class="liveblip"></div>
+    LILA<span style="color:var(--acc)">BLACK</span>
+    <span class="sub">TELEMETRY</span>
+  </div>
+
+  <div class="h-map-tabs" id="map-tabs"></div>
+
+  <div class="h-stats">
+    <div class="hstat"><div class="hstat-v" id="stat-h-sessions">—</div><div class="hstat-l">SESSIONS</div></div>
+    <div class="hdiv"></div>
+    <div class="hstat"><div class="hstat-v" id="stat-h-players">—</div><div class="hstat-l">PLAYERS</div></div>
+    <div class="hdiv"></div>
+    <div class="hstat"><div class="hstat-v" id="stat-h-events">—</div><div class="hstat-l">EVENTS</div></div>
+    <div class="hdiv"></div>
+    <div class="hstat"><div class="hstat-v ck" id="stat-h-kills">—</div><div class="hstat-l">KILLS</div></div>
+    <div class="hdiv"></div>
+    <div class="hstat"><div class="hstat-v cd" id="stat-h-deaths">—</div><div class="hstat-l">DEATHS</div></div>
+  </div>
+
+  <div class="h-spacer"></div>
+
+  <div class="h-actions">
+    <button class="hbtn" onclick="App.resetCamera()">⊡ RESET VIEW</button>
+    <button class="hbtn" onclick="App.exportPng()">↓ EXPORT PNG</button>
+    <label class="hbtn primary" style="cursor:pointer">
+      + LOAD FILES
+      <input type="file" multiple accept=".nakama-0,.parquet" style="display:none"
+        onchange="App.loadFiles(this.files)">
+    </label>
+  </div>
+</header>
+
+<!-- ══ LEFT PANEL ════════════════════════════════════════════════════════════════ -->
+<aside class="left">
+
+  <!-- Match selector -->
+  <div class="psec">
+    <div class="psec-head">MATCH FILTER</div>
+    <div class="match-row">
+      <span class="match-label">MATCH</span>
+      <select class="match-sel" id="match-select" onchange="App.setMatch(this.value)">
+        <option value="">All Matches</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Player filter + list -->
+  <div class="psec" style="flex:1;display:flex;flex-direction:column;min-height:0">
+    <div class="psec-head">
+      PLAYERS
+      <div class="psec-actions">
+        <button class="smolbtn" onclick="App.allPlayers(true)">ALL</button>
+        <button class="smolbtn" onclick="App.allPlayers(false)">NONE</button>
+      </div>
+    </div>
+    <div class="pfilter-row">
+      <button class="pfbtn active" id="pf-all"   onclick="App.setPlayerFilter('all')">ALL</button>
+      <button class="pfbtn"        id="pf-human" onclick="App.setPlayerFilter('human')">HUMANS</button>
+      <button class="pfbtn"        id="pf-bot"   onclick="App.setPlayerFilter('bot')">BOTS</button>
+    </div>
+    <div class="pscroll" id="player-list">
+      <div class="nd">Loading data…</div>
+    </div>
+  </div>
+
+  <!-- Layer toggles -->
+  <div class="psec">
+    <div class="psec-head">LAYERS</div>
+    <div class="layer-row">
+      <div class="ltog on" id="layer-paths"     onclick="App.toggleLayer('paths')"></div>
+      <span class="lname">Movement Paths</span>
+      <div class="lcol" style="background:#fff;opacity:.4"></div>
+    </div>
+    <div class="layer-row">
+      <div class="ltog on" id="layer-positions" onclick="App.toggleLayer('positions')"></div>
+      <span class="lname">Positions</span>
+      <div class="lcol" style="background:#00d4f0"></div>
+    </div>
+    <div class="layer-row">
+      <div class="ltog on" id="layer-kills"     onclick="App.toggleLayer('kills')"></div>
+      <span class="lname">Kills</span>
+      <div class="lcol" style="background:#ff2244"></div>
+    </div>
+    <div class="layer-row">
+      <div class="ltog on" id="layer-loot"      onclick="App.toggleLayer('loot')"></div>
+      <span class="lname">Loot Pickups</span>
+      <div class="lcol" style="background:#f0c020"></div>
+    </div>
+    <div class="layer-row">
+      <div class="ltog on" id="layer-deaths"    onclick="App.toggleLayer('deaths')"></div>
+      <span class="lname">Deaths</span>
+      <div class="lcol" style="background:#b040ff"></div>
+    </div>
+    <div class="sl-row">
+      <span class="sl-label">PATH ALPHA</span>
+      <input type="range" min="5" max="100" value="25"
+        oninput="App.setPathAlpha(this.value)">
+    </div>
+    <div class="sl-row">
+      <span class="sl-label">MARKER SIZE</span>
+      <input type="range" min="40" max="200" value="100"
+        oninput="App.setMarkerScale(this.value)">
+    </div>
+  </div>
+
+  <!-- Event type filters -->
+  <div class="psec">
+    <div class="psec-head">
+      EVENT TYPES
+      <div class="psec-actions">
+        <button class="smolbtn" onclick="App.setAllEvTypes(true)">ALL</button>
+        <button class="smolbtn" onclick="App.setAllEvTypes(false)">NONE</button>
+      </div>
+    </div>
+    <div class="evpills" id="ev-filters"></div>
+  </div>
+
+  <!-- Heatmap controls -->
+  <div class="psec">
+    <div class="psec-head">HEATMAP OVERLAY</div>
+    <div class="hm-btns">
+      <button class="hm-btn active" id="hm-off"     onclick="App.setHeatmap('off')">Off</button>
+      <button class="hm-btn"        id="hm-traffic" onclick="App.setHeatmap('traffic')">Traffic</button>
+      <button class="hm-btn"        id="hm-kills"   onclick="App.setHeatmap('kills')">Kills</button>
+      <button class="hm-btn"        id="hm-deaths"  onclick="App.setHeatmap('deaths')">Deaths</button>
+    </div>
+    <div class="sl-row">
+      <span class="sl-label">OPACITY</span>
+      <input type="range" min="0" max="100" value="70"
+        oninput="App.setHeatOpacity(this.value)">
+      <span class="sl-val" id="heat-alpha-val">70</span>
+    </div>
+    <div class="sl-row">
+      <span class="sl-label">RADIUS</span>
+      <input type="range" min="8" max="80" value="28"
+        oninput="App.setHeatRadius(this.value)">
+      <span class="sl-val" id="heat-radius-val">28</span>
+    </div>
+  </div>
+
+</aside>
+
+<!-- ══ VIEWPORT ══════════════════════════════════════════════════════════════════ -->
+<main class="viewport" id="viewport">
+  <canvas id="main-canvas"></canvas>
+  <canvas id="heat-canvas"></canvas>
+
+  <div class="empty-state" id="empty-state">
+    <div class="es-icon">◈</div>
+    <div class="es-title">LILA BLACK TELEMETRY</div>
+    <div class="es-sub">LOADING DATA…</div>
+  </div>
+
+  <div class="vp-footer">
+    <span id="coord-display" style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.5px;color:rgba(255,255,255,.25)"></span>
+    <div style="display:flex;gap:16px;align-items:center">
+      <span id="zoom-display" style="font-size:9px;color:rgba(255,255,255,.18)">100%</span>
+      <span style="font-size:8px;color:rgba(255,255,255,.13);letter-spacing:.5px">DRAG pan · SCROLL zoom · R reset · SPACE play · E export</span>
+    </div>
+  </div>
+
+  <div id="loading-overlay">
+    <div class="loadbox">
+      <div class="spinner"></div>
+      <div class="lt">LOADING…</div>
+    </div>
+  </div>
+</main>
+
+<!-- ══ RIGHT PANEL ════════════════════════════════════════════════════════════════ -->
+<aside class="right">
+
+  <!-- Stats grid -->
+  <div class="psec">
+    <div class="psec-head">STATISTICS</div>
+    <div class="stat-grid">
+      <div class="scell"><div class="scval ca" id="stat-sessions">—</div><div class="sclabel">SESSIONS</div></div>
+      <div class="scell"><div class="scval ca" id="stat-players">—</div><div class="sclabel">PLAYERS</div></div>
+      <div class="scell"><div class="scval ck" id="stat-kills">—</div><div class="sclabel">KILLS</div></div>
+      <div class="scell"><div class="scval cl" id="stat-loot">—</div><div class="sclabel">LOOT</div></div>
+      <div class="scell"><div class="scval cd" id="stat-deaths">—</div><div class="sclabel">DEATHS</div></div>
+      <div class="scell"><div class="scval cp" id="stat-pos">—</div><div class="sclabel">POSITIONS</div></div>
+    </div>
+  </div>
+
+  <!-- Event breakdown -->
+  <div class="psec">
+    <div class="psec-head">EVENT BREAKDOWN</div>
+    <div style="padding:6px 10px" id="ev-bars"></div>
+  </div>
+
+  <!-- Kill hotzones -->
+  <div class="psec">
+    <div class="psec-head">KILL HOTZONES <span style="color:var(--dim);font-size:7px">click to zoom</span></div>
+    <div style="padding:4px 12px" id="hotzones"><div class="nd">No kill data</div></div>
+  </div>
+
+  <!-- Legend -->
+  <div class="psec">
+    <div class="psec-head">MARKER LEGEND</div>
+    <div style="padding:4px 12px" id="legend"></div>
+  </div>
+
+  <!-- Map info -->
+  <div class="pscroll">
+    <div class="psec-head" style="padding:7px 12px 5px">MAP INFO</div>
+    <div style="padding:4px 12px;font-size:9px;color:var(--muted);line-height:2.4" id="map-info">
+      <div>Awaiting data…</div>
+    </div>
+  </div>
+
+</aside>
+
+<!-- ══ TIMELINE ═══════════════════════════════════════════════════════════════════ -->
+<div class="timeline">
+  <span style="font-size:7px;letter-spacing:2px;color:var(--muted);white-space:nowrap;margin-right:4px">TIMELINE</span>
+  <div id="tl-bar" style="display:flex;align-items:center;gap:10px;flex:1">
+    <button class="tl-btn" onclick="App.tlRestart()" title="Restart">⏮</button>
+    <button class="tl-btn" id="tl-playbtn" onclick="App.tlPlay()" title="Play/Pause">▶</button>
+    <span class="tl-time" id="tl-current">0:00</span>
+    <div id="tl-track">
+      <input type="range" id="tl-scrubber" min="0" max="0" value="0"
+        oninput="App.tlSeek(this.value)">
+    </div>
+    <span class="tl-time" id="tl-total">0:00</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;padding-left:12px;flex-shrink:0">
+    <span style="font-size:8px;color:var(--muted);letter-spacing:.5px">SPEED</span>
+    <input type="range" style="width:72px" min="1" max="50" value="10"
+      oninput="App.tlSpeed(this.value)">
+    <span class="sl-val" id="tl-speed-val">10×</span>
+  </div>
+  <div style="font-size:8px;color:var(--muted);padding-left:14px;letter-spacing:.5px;white-space:nowrap;flex-shrink:0">
+    WITH TIMESTAMPS: <span id="ts-count" style="color:var(--acc)">—</span>
+  </div>
+</div>
+
+</div><!-- .app -->
+
+<div id="tooltip"></div>
+
+<script type="module">
+import { init } from './js/app.js';
+init();
+</script>
+</body>
+</html>

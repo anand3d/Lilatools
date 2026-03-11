@@ -1,0 +1,468 @@
+/* ════════════════════════════════════════════════════════
+   LILA BLACK Telemetry Tool — app.css
+   Design direction: Dense-information dark interface.
+   Industrial/tactical aesthetic. Monospace data, clean panels.
+   Colour palette anchored to orange accent (#e05800), near-black
+   background, and per-event-type semantic colours.
+═══════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500&family=Barlow:wght@300;400;600;700;900&display=swap');
+
+/* ── Reset & tokens ────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #0b0c0f;
+  --s1:      #10121a;
+  --s2:      #151821;
+  --s3:      #1b1f2b;
+  --border:  #222535;
+  --border2: #2c3147;
+  --text:    #b0c0d4;
+  --muted:   #424f66;
+  --dim:     #252c3e;
+  --acc:     #e05800;
+  --acc2:    #ff7020;
+  --accbg:   rgba(224,88,0,.10);
+  --kill:    #ff2244;
+  --loot:    #f0c020;
+  --death:   #b040ff;
+  --pos:     #00d4f0;
+  --storm:   #3080ff;
+  --bot:     #30e880;
+  --r:       2px;       /* standard border-radius */
+}
+
+html, body {
+  height: 100%; overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px; line-height: 1.5;
+}
+
+/* ── App shell ────────────────────────────────────────── */
+.app {
+  display: grid;
+  grid-template-rows: 46px 1fr 80px;
+  grid-template-columns: 256px 1fr 228px;
+  height: 100vh;
+}
+
+/* ── Header ───────────────────────────────────────────── */
+header {
+  grid-column: 1 / -1;
+  display: flex; align-items: center;
+  background: var(--s1);
+  border-bottom: 2px solid var(--acc);
+  overflow: hidden; z-index: 40;
+}
+
+.h-logo {
+  padding: 0 18px;
+  font-family: 'Barlow', sans-serif;
+  font-weight: 900; font-size: 15px;
+  letter-spacing: 5px; text-transform: uppercase;
+  color: #fff; white-space: nowrap;
+  border-right: 1px solid var(--border2);
+  height: 100%; display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0;
+}
+.h-logo .liveblip {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--acc);
+  box-shadow: 0 0 8px var(--acc);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
+.h-logo .sub {
+  font-size: 9px; font-weight: 300; color: var(--muted);
+  letter-spacing: 3px; font-family: 'DM Mono', monospace;
+}
+
+.h-map-tabs {
+  display: flex; height: 100%;
+  border-right: 1px solid var(--border2);
+}
+.map-tab {
+  padding: 0 16px; background: none; border: none;
+  border-right: 1px solid var(--border);
+  color: var(--muted);
+  font-family: 'DM Mono', monospace; font-size: 9px;
+  letter-spacing: 1.5px; cursor: pointer;
+  text-transform: uppercase; transition: all .15s;
+  position: relative;
+}
+.map-tab:hover { color: var(--text); background: var(--s2); }
+.map-tab.active { color: var(--acc); background: var(--accbg); }
+.map-tab.active::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+  height: 2px; background: var(--acc);
+}
+
+.h-stats {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 14px; height: 100%;
+  border-right: 1px solid var(--border2);
+}
+.hstat { text-align: center; line-height: 1; }
+.hstat-v {
+  font-family: 'Barlow', sans-serif; font-weight: 700;
+  font-size: 16px; color: var(--acc);
+}
+.hstat-v.ck { color: var(--kill); }
+.hstat-v.cd { color: var(--death); }
+.hstat-l {
+  font-size: 7px; letter-spacing: 2px;
+  color: var(--muted); text-transform: uppercase;
+}
+.hdiv { width: 1px; height: 20px; background: var(--border2); }
+
+.h-spacer { flex: 1; }
+.h-actions {
+  display: flex; align-items: center; gap: 7px;
+  padding: 0 14px;
+}
+.hbtn {
+  padding: 5px 11px;
+  background: var(--s2); border: 1px solid var(--border2);
+  color: var(--muted); font-family: 'DM Mono', monospace;
+  font-size: 8px; letter-spacing: 1px; cursor: pointer;
+  text-transform: uppercase; transition: all .15s; border-radius: var(--r);
+  white-space: nowrap;
+}
+.hbtn:hover { color: var(--text); border-color: var(--text); }
+.hbtn.primary {
+  background: var(--acc); border-color: var(--acc); color: #fff;
+}
+.hbtn.primary:hover { background: var(--acc2); }
+
+/* ── Left panel ───────────────────────────────────────── */
+.left {
+  grid-row: 2; display: flex; flex-direction: column;
+  background: var(--s1); border-right: 1px solid var(--border);
+  overflow: hidden;
+}
+
+/* ── Viewport ─────────────────────────────────────────── */
+.viewport {
+  grid-row: 2; position: relative; background: #07080b; overflow: hidden;
+}
+#main-canvas, #heat-canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+}
+#heat-canvas { pointer-events: none; }
+
+.empty-state {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 10px; pointer-events: none;
+}
+.es-icon { font-size: 42px; opacity: .1; }
+.es-title {
+  font-family: 'Barlow', sans-serif; font-weight: 700;
+  font-size: 24px; letter-spacing: 5px;
+  color: var(--muted); text-transform: uppercase;
+}
+.es-sub { font-size: 9px; color: var(--dim); letter-spacing: 2px; }
+
+.vp-footer {
+  position: absolute; bottom: 8px; left: 0; right: 0;
+  display: flex; justify-content: space-between; padding: 0 12px;
+  pointer-events: none; z-index: 5;
+  font-size: 8px; letter-spacing: 1px;
+  color: rgba(255,255,255,.18);
+}
+.kb-hints { text-align: right; line-height: 2; }
+
+/* ── Right panel ──────────────────────────────────────── */
+.right {
+  grid-row: 2; display: flex; flex-direction: column;
+  background: var(--s1); border-left: 1px solid var(--border);
+  overflow: hidden;
+}
+
+/* ── Timeline bar ─────────────────────────────────────── */
+.timeline {
+  grid-column: 1 / -1; grid-row: 3;
+  background: var(--s1); border-top: 1px solid var(--border2);
+  display: flex; align-items: center; gap: 12px; padding: 0 16px;
+  z-index: 30;
+}
+#tl-bar {
+  display: flex; align-items: center; gap: 12px; flex: 1;
+}
+.tl-btn {
+  background: none; border: none; color: var(--muted);
+  font-size: 16px; cursor: pointer; padding: 4px 6px;
+  border-radius: var(--r); transition: color .15s;
+}
+.tl-btn:hover { color: var(--acc); }
+.tl-time {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  color: var(--text); white-space: nowrap; min-width: 42px;
+}
+#tl-track {
+  flex: 1; position: relative; height: 4px;
+  background: var(--dim); border-radius: 2px; cursor: pointer;
+}
+#tl-track::after {
+  content: '';
+  position: absolute; top: 0; left: 0; bottom: 0;
+  width: var(--progress, 0%);
+  background: var(--acc); border-radius: 2px;
+  pointer-events: none;
+}
+#tl-scrubber {
+  position: absolute; inset: -6px 0; width: 100%; opacity: 0; cursor: pointer;
+}
+.tl-speed-ctrl { display: flex; align-items: center; gap: 6px; }
+.tl-speed-label {
+  font-size: 8px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.tl-speed-val { font-size: 9px; color: var(--acc); min-width: 20px; }
+.tl-speed-slider { width: 80px; }
+.tl-no-ts {
+  font-size: 9px; color: var(--muted); letter-spacing: 1px;
+}
+
+/* ── Panel shared ─────────────────────────────────────── */
+.psec { border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.psec-head {
+  padding: 7px 12px 5px;
+  font-size: 7px; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--muted); display: flex; align-items: center; justify-content: space-between;
+}
+.psec-actions { display: flex; gap: 4px; }
+.smolbtn {
+  padding: 1px 6px; background: var(--dim); border: none;
+  color: var(--muted); font-family: 'DM Mono', monospace;
+  font-size: 7px; letter-spacing: 1px; cursor: pointer;
+  border-radius: 1px; transition: all .15s;
+}
+.smolbtn:hover { color: var(--text); background: var(--border2); }
+.pscroll { overflow-y: auto; flex: 1; min-height: 0; }
+.pscroll::-webkit-scrollbar { width: 2px; }
+.pscroll::-webkit-scrollbar-thumb { background: var(--dim); }
+.nd { padding: 12px 12px; font-size: 9px; color: var(--dim); text-align: center; }
+
+/* ── Match selector ───────────────────────────────────── */
+.match-row { display: flex; align-items: center; gap: 6px; padding: 6px 12px; }
+.match-label { font-size: 8px; color: var(--muted); letter-spacing: 1px; flex-shrink: 0; }
+select.match-sel {
+  flex: 1; background: var(--s3); border: 1px solid var(--border);
+  color: var(--text); font-family: 'DM Mono', monospace;
+  font-size: 9px; padding: 4px 6px; border-radius: var(--r);
+  cursor: pointer;
+}
+select.match-sel:focus { outline: none; border-color: var(--acc); }
+
+/* ── Player filter buttons ────────────────────────────── */
+.pfilter-row {
+  display: flex; gap: 4px; padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.pfbtn {
+  flex: 1; padding: 3px 4px;
+  background: var(--s2); border: 1px solid var(--border);
+  color: var(--muted); font-family: 'DM Mono', monospace;
+  font-size: 7px; letter-spacing: 1px; cursor: pointer;
+  border-radius: 1px; text-align: center; transition: all .15s;
+}
+.pfbtn.active { border-color: var(--acc); color: var(--acc); background: var(--accbg); }
+
+/* ── Player list ──────────────────────────────────────── */
+.pitem {
+  display: flex; align-items: center; gap: 7px;
+  padding: 5px 12px; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background .1s;
+}
+.pitem:hover { background: rgba(255,255,255,.018); }
+.pitem.off { opacity: .2; }
+.pswatch { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
+.pinfo { flex: 1; min-width: 0; }
+.pid { font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.psub { font-size: 7px; color: var(--muted); margin-top: 1px; }
+.pstats { font-size: 8px; text-align: right; flex-shrink: 0; line-height: 2; }
+.pk { color: var(--kill); }
+.pd { color: var(--death); }
+.pl { color: var(--loot); }
+
+/* ── Event filter pills ───────────────────────────────── */
+.evpills { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 12px; }
+.evpill {
+  padding: 2px 8px; border-radius: 10px; font-size: 8px;
+  border: 1px solid var(--ec, #888); color: var(--ec, #888);
+  cursor: pointer; transition: all .15s; letter-spacing: .3px;
+  opacity: .3;
+}
+.evpill.on { background: color-mix(in srgb, var(--ec, #888) 15%, transparent); opacity: 1; }
+
+/* ── Layer toggles ────────────────────────────────────── */
+.layer-row {
+  display: flex; align-items: center; gap: 7px;
+  padding: 5px 12px; border-bottom: 1px solid var(--border);
+}
+.ltog {
+  width: 26px; height: 13px; background: var(--dim);
+  border-radius: 7px; cursor: pointer; position: relative;
+  transition: background .2s; flex-shrink: 0;
+}
+.ltog.on { background: var(--acc); }
+.ltog::after {
+  content: ''; position: absolute;
+  width: 9px; height: 9px; background: #fff;
+  border-radius: 50%; top: 2px; left: 2px; transition: left .2s;
+}
+.ltog.on::after { left: 15px; }
+.lname { flex: 1; font-size: 9px; }
+.lcol { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+.sl-row {
+  display: flex; align-items: center; gap: 7px;
+  padding: 4px 12px;
+}
+.sl-label {
+  font-size: 8px; color: var(--muted); width: 58px;
+  flex-shrink: 0; text-transform: uppercase; letter-spacing: .5px;
+}
+input[type=range] {
+  flex: 1; -webkit-appearance: none; height: 2px;
+  background: var(--dim); outline: none; cursor: pointer; border-radius: 1px;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 10px; height: 10px;
+  background: var(--acc); border-radius: 50%; cursor: pointer;
+}
+.sl-val { width: 28px; text-align: right; font-size: 9px; color: var(--dim); }
+
+/* ── Heatmap mode buttons ─────────────────────────────── */
+.hm-btns { display: flex; gap: 4px; padding: 6px 12px; flex-wrap: wrap; }
+.hm-btn {
+  flex: 1; padding: 4px 6px;
+  background: var(--s2); border: 1px solid var(--border);
+  color: var(--muted); font-family: 'DM Mono', monospace;
+  font-size: 8px; letter-spacing: .5px; cursor: pointer;
+  border-radius: var(--r); text-align: center; transition: all .15s;
+  white-space: nowrap;
+}
+.hm-btn.active { border-color: var(--acc); color: var(--acc); background: var(--accbg); }
+
+/* ── Stats right ──────────────────────────────────────── */
+.stat-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+  padding: 8px 10px;
+}
+.scell {
+  background: var(--s2); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 7px 8px;
+}
+.scval {
+  font-family: 'Barlow', sans-serif; font-weight: 700;
+  font-size: 19px; line-height: 1;
+}
+.scval.ca { color: var(--acc); }
+.scval.ck { color: var(--kill); }
+.scval.cd { color: var(--death); }
+.scval.cl { color: var(--loot); }
+.scval.cp { color: var(--pos); }
+.sclabel {
+  font-size: 7px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted); margin-top: 2px;
+}
+
+.evbar { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
+.evbar-label {
+  width: 58px; font-size: 8px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .5px; flex-shrink: 0;
+  overflow: hidden; white-space: nowrap;
+}
+.evbar-track { flex: 1; height: 3px; background: var(--dim); border-radius: 2px; overflow: hidden; }
+.evbar-fill { height: 100%; border-radius: 2px; transition: width .4s; }
+.evbar-count { width: 22px; text-align: right; font-size: 8px; color: var(--dim); }
+
+/* ── Hotzones ─────────────────────────────────────────── */
+.hzrow {
+  display: flex; align-items: center; gap: 7px;
+  padding: 4px 0; border-bottom: 1px solid var(--border);
+  cursor: pointer; font-size: 9px;
+}
+.hzrow:last-child { border: none; }
+.hzrow:hover { color: #fff; }
+.hzrank { width: 14px; font-size: 7px; color: var(--dim); }
+.hzloc { flex: 1; color: var(--muted); }
+.hzcnt { color: var(--kill); font-size: 8px; }
+
+/* ── Legend ───────────────────────────────────────────── */
+.lgrow {
+  display: flex; align-items: center; gap: 7px;
+  padding: 3px 0; border-bottom: 1px solid var(--border); font-size: 9px;
+}
+.lgrow:last-child { border: none; }
+.lgdot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.lgcat {
+  font-size: 7px; color: var(--dim); letter-spacing: .5px;
+  text-transform: uppercase; margin-left: auto;
+}
+
+/* ── Tooltip ──────────────────────────────────────────── */
+#tooltip {
+  position: fixed;
+  background: rgba(7,9,14,.97);
+  border: 1px solid var(--acc);
+  border-radius: var(--r);
+  padding: 9px 12px; pointer-events: none;
+  z-index: 300; opacity: 0; transition: opacity .1s;
+  min-width: 158px; backdrop-filter: blur(10px);
+  font-family: 'DM Mono', monospace;
+}
+#tooltip.show { opacity: 1; }
+.tt-ev {
+  font-family: 'Barlow', sans-serif; font-weight: 700;
+  font-size: 14px; letter-spacing: .5px; margin-bottom: 3px;
+}
+.tt-uid { font-size: 8px; color: var(--muted); margin-bottom: 5px; }
+.tt-row {
+  display: flex; justify-content: space-between;
+  font-size: 9px; margin-top: 2px;
+}
+.tt-row span:first-child { color: var(--muted); }
+
+/* ── Loading overlay ──────────────────────────────────── */
+#loading-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,.72);
+  display: none; align-items: center; justify-content: center;
+  z-index: 200;
+}
+.loadbox {
+  background: var(--s1); border: 1px solid var(--border2);
+  border-radius: var(--r); padding: 18px 24px; text-align: center;
+}
+.spinner {
+  width: 26px; height: 26px;
+  border: 2px solid var(--dim); border-top-color: var(--acc);
+  border-radius: 50%; animation: spin .6s linear infinite;
+  margin: 0 auto 10px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.lt { font-size: 9px; letter-spacing: 2px; color: var(--muted); }
+
+/* ── Drag-drop zone highlight ─────────────────────────── */
+.viewport.drag-over::after {
+  content: 'DROP PARQUET FILES';
+  position: absolute; inset: 0;
+  background: rgba(224,88,0,.12);
+  border: 2px dashed var(--acc);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Barlow', sans-serif; font-weight: 700;
+  font-size: 22px; letter-spacing: 4px; color: var(--acc);
+  z-index: 10; pointer-events: none;
+}
+
+/* ── Scrollbar global ─────────────────────────────────── */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--dim); }
