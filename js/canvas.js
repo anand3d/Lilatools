@@ -141,6 +141,7 @@ export class MapRenderer {
     // Layer visibility
     this.layers = {
       paths:     true,
+      arrows:    true,
       positions: true,
       kills:     true,
       loot:      true,
@@ -279,13 +280,49 @@ export class MapRenderer {
       const events = this._eventsUpTo(s, timeMs).filter(e => e.px != null);
       if (events.length < 2) return;
       const col = s._color || '#ffffff';
+      const pts = events.map(e => this.toScreen(e.px, e.py));
+
+      // Draw dashed path
       ctx.strokeStyle = col;
       ctx.beginPath();
-      events.forEach((e, i) => {
-        const { sx, sy } = this.toScreen(e.px, e.py);
-        i === 0 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy);
-      });
+      pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.sx, p.sy) : ctx.lineTo(p.sx, p.sy));
       ctx.stroke();
+
+      // Draw direction arrows — one per segment, spaced at least 40px apart
+      if (this.layers.arrows) {
+        ctx.setLineDash([]);
+        ctx.save();
+        ctx.globalAlpha = alpha * 1.4;
+        ctx.fillStyle = col;
+        ctx.strokeStyle = 'rgba(0,0,0,.45)';
+        ctx.lineWidth = 0.7;
+        let distSinceArrow = 999;
+        for (let i = 1; i < pts.length; i++) {
+          const ax = pts[i-1].sx, ay = pts[i-1].sy;
+          const bx = pts[i].sx,   by = pts[i].sy;
+          const segLen = Math.hypot(bx - ax, by - ay);
+          distSinceArrow += segLen;
+          if (distSinceArrow < 44) continue;
+          distSinceArrow = 0;
+          // Place arrow at midpoint of segment
+          const mx = (ax + bx) / 2, my = (ay + by) / 2;
+          const angle = Math.atan2(by - ay, bx - ax);
+          const r = 5;
+          ctx.save();
+          ctx.translate(mx, my);
+          ctx.rotate(angle);
+          ctx.beginPath();
+          ctx.moveTo(r,  0);
+          ctx.lineTo(-r, -r * 0.6);
+          ctx.lineTo(-r,  r * 0.6);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+        }
+        ctx.restore();
+        ctx.setLineDash([5, 8]);
+      }
     });
 
     ctx.setLineDash([]);
@@ -360,6 +397,87 @@ export class MapRenderer {
       d[i+3] = Math.min(255, t * 260);
     }
     hx.putImageData(id, 0, 0);
+  }
+
+  // ── Compare render ────────────────────────────────────────────────────────
+
+  renderCompare(sessionsA, sessionsB, activeEvTypes, visibleUids, timeMs = null) {
+    // Draw the map image once, then render A normally and B with a ring overlay
+    const { ctx, W, H } = this;
+    ctx.clearRect(0, 0, W, H);
+
+    if (this.mapImage) {
+      const iw = this.mapImage.naturalWidth, ih = this.mapImage.naturalHeight;
+      const sc = Math.min(W / iw, H / ih);
+      const dw = iw * sc * this.cam.zoom, dh = ih * sc * this.cam.zoom;
+      const dx = (W - dw) / 2 + this.cam.x, dy = (H - dh) / 2 + this.cam.y;
+      this._imgRect = { x: dx, y: dy, w: dw, h: dh };
+      ctx.drawImage(this.mapImage, dx, dy, dw, dh);
+      ctx.fillStyle = 'rgba(0,0,0,.12)';
+      ctx.fillRect(dx, dy, dw, dh);
+    } else {
+      ctx.fillStyle = '#080a0d'; ctx.fillRect(0, 0, W, H);
+      this._imgRect = { x: 0, y: 0, w: W, h: H };
+      this._drawGrid();
+    }
+
+    const shownTypes = new Set();
+    if (this.layers.positions) { shownTypes.add('Position'); shownTypes.add('BotPosition'); }
+    if (this.layers.kills)     { shownTypes.add('Kill'); shownTypes.add('BotKill'); }
+    if (this.layers.loot)      { shownTypes.add('Loot'); }
+    if (this.layers.deaths)    { shownTypes.add('Killed'); shownTypes.add('BotKilled'); shownTypes.add('KilledByStorm'); }
+
+    // Match A — normal rendering
+    const allA = sessionsA.filter(s => visibleUids.has(s.uid));
+    if (this.layers.paths) this._drawPaths(allA, activeEvTypes, timeMs, this.pathAlpha);
+    this._drawMarkers(allA, shownTypes, activeEvTypes, timeMs);
+
+    // Match B — dimmed + white ring to distinguish
+    const allB = sessionsB.filter(s => visibleUids.has(s.uid));
+    if (this.layers.paths) {
+      ctx.save(); ctx.globalAlpha = 0.5;
+      this._drawPaths(allB, activeEvTypes, timeMs, this.pathAlpha);
+      ctx.restore();
+    }
+    this._drawMarkersB(allB, shownTypes, activeEvTypes, timeMs);
+
+    // Labels on the viewport
+    ctx.save();
+    ctx.font = 'bold 11px "DM Mono", monospace';
+    ctx.fillStyle = 'rgba(255,255,255,.7)';
+    ctx.fillText('▲ MATCH A', 12, H - 28);
+    ctx.fillStyle = 'rgba(255,255,255,.4)';
+    ctx.fillText('◈ MATCH B', 12, H - 14);
+    ctx.restore();
+
+    if (this.layers.heatmap) {
+      ctx.save(); ctx.globalAlpha = this.heatOpacity;
+      ctx.drawImage(this.heatCv, 0, 0); ctx.restore();
+    }
+  }
+
+  // Draw match-B markers with a white ring to distinguish from match A
+  _drawMarkersB(sessions, shownTypes, activeEvTypes, timeMs) {
+    sessions.forEach(s => {
+      const events = this._eventsUpTo(s, timeMs);
+      events.forEach(e => {
+        if (!e.px || !e.py) return;
+        if (!shownTypes.has(e.ev)) return;
+        if (!activeEvTypes.has(e.ev)) return;
+        const { sx, sy } = this.toScreen(e.px, e.py);
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.globalAlpha = 0.6;
+        // White ring
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(sx, sy, 8, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+        drawMarker(this.ctx, sx, sy, e.ev, this.markerScale * 0.85, false);
+      });
+    });
   }
 
   // ── Hit testing ────────────────────────────────────────────────────────────
