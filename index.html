@@ -36,6 +36,7 @@
   <div class="h-actions">
     <button class="hbtn" onclick="App.resetCamera()">⊡ RESET VIEW</button>
     <button class="hbtn" onclick="App.exportPng()">↓ EXPORT PNG</button>
+    <button class="hbtn insights-btn" onclick="App.toggleInsights()">◈ INSIGHTS</button>
     <label class="hbtn primary" style="cursor:pointer">
       + LOAD FILES
       <input type="file" multiple accept=".nakama-0,.parquet" style="display:none"
@@ -252,6 +253,152 @@
 </div><!-- .app -->
 
 <div id="tooltip"></div>
+
+<!-- ══ INSIGHTS PANEL ═══════════════════════════════════════════════════════════ -->
+<div id="insights-backdrop" onclick="App.toggleInsights()"></div>
+
+<div id="insights-panel">
+  <div class="ins-header">
+    <div class="ins-title">◈ DESIGN INSIGHTS</div>
+    <div class="ins-subtitle">5 days production data · AmbroseValley & Lockdown · 9 players · 220 events</div>
+    <div class="ins-actions">
+      <button class="hbtn" onclick="App.downloadInsights()">↓ DOWNLOAD MD</button>
+      <button class="hbtn" onclick="App.toggleInsights()" style="margin-left:6px">✕ CLOSE</button>
+    </div>
+  </div>
+
+  <div class="ins-body">
+
+    <div class="ins-card">
+      <div class="ins-card-num">01</div>
+      <div class="ins-card-content">
+        <div class="ins-card-title">Loot is the fight trigger, not position or rotation</div>
+        <div class="ins-tag tag-high">HIGH CONFIDENCE</div>
+        <div class="ins-section-label">WHAT THE DATA SHOWS</div>
+        <p>Every single kill hotzone cell overlaps with a loot hotzone cell — 12 out of 12, 100% overlap. The top kill cluster (world X: 56–100, Z: 110–129) accounts for <strong>22% of all kills</strong> and <strong>18% of all loot pickups</strong>. Kill cell ranking and loot cell ranking track almost identically across the map.</p>
+        <div class="ins-section-label">WHAT THIS MEANS</div>
+        <p>Players aren't fighting over angles or high ground. They're colliding because they're going for the same chest. Combat is loot-driven, not position-driven.</p>
+        <div class="ins-section-label">ACTIONABLE ITEMS</div>
+        <ul>
+          <li>Redistribute high-value loot into low-traffic zones to spread fights across the map</li>
+          <li>Reduce loot density in the top hotzone to lower forced collision rate</li>
+          <li>Audit whether the top hotzone is a deliberate POI or a side effect of spawner placement</li>
+        </ul>
+        <div class="ins-metrics">
+          <span class="ins-metric-label">METRICS AFFECTED</span>
+          Kill spread across map · Average engagement distance · Time-to-first-contact
+        </div>
+      </div>
+    </div>
+
+    <div class="ins-card">
+      <div class="ins-card-num">02</div>
+      <div class="ins-card-content">
+        <div class="ins-card-title">The right half of AmbroseValley is a dead zone</div>
+        <div class="ins-tag tag-high">HIGH CONFIDENCE</div>
+        <div class="ins-section-label">WHAT THE DATA SHOWS</div>
+        <p>The right half of the map (px &gt; 512) accounts for only <strong>37.5% of all events</strong>. The top-right quadrant registers <strong>zero activity</strong> — no positions, no kills, no loot pickups. Half the playable area is producing no gameplay.</p>
+        <div class="ins-quadrant-grid">
+          <div class="qcell low">0</div><div class="qcell low">2</div><div class="qcell low">2</div><div class="qcell dead">0</div>
+          <div class="qcell mid">8</div><div class="qcell mid">14</div><div class="qcell hot">22</div><div class="qcell dead">0</div>
+          <div class="qcell low">4</div><div class="qcell mid">11</div><div class="qcell dead">0</div><div class="qcell dead">0</div>
+          <div class="qcell dead">1</div><div class="qcell dead">1</div><div class="qcell dead">0</div><div class="qcell dead">0</div>
+        </div>
+        <div class="ins-quadrant-label">Event count per map quadrant (top-left = NW corner)</div>
+        <div class="ins-section-label">ACTIONABLE ITEMS</div>
+        <ul>
+          <li>Add a high-value loot spawn or landmark on the right side — based on Insight 1, that alone may redirect traffic</li>
+          <li>Check sightlines from the active centre into the right side — exposed crossings with no cover kill traversal</li>
+          <li>Walk the right side and ask: what's the pull? If there's no answer, players won't go there</li>
+        </ul>
+        <div class="ins-metrics">
+          <span class="ins-metric-label">METRICS AFFECTED</span>
+          Event distribution by quadrant · Average path length · Zone utilisation rate
+        </div>
+      </div>
+    </div>
+
+    <div class="ins-card">
+      <div class="ins-card-num">03</div>
+      <div class="ins-card-content">
+        <div class="ins-card-title">Lockdown is dramatically slower — no kills in 28 minutes</div>
+        <div class="ins-tag tag-med">MEDIUM CONFIDENCE</div>
+        <div class="ins-section-label">WHAT THE DATA SHOWS</div>
+        <p>The one timed Lockdown session ran for <strong>28 minutes</strong> at <strong>0.4 events/min</strong>. AmbroseValley sessions average <strong>10–11 minutes</strong> at <strong>1.0–1.2 events/min</strong> — three times the activity rate. Zero kills and zero deaths in the Lockdown session.</p>
+        <table class="ins-table">
+          <tr><th>Map</th><th>Avg Duration</th><th>Event Rate</th><th>Kills</th></tr>
+          <tr><td>AmbroseValley</td><td>~10 min</td><td>1.1 / min</td><td>✓</td></tr>
+          <tr><td>Lockdown</td><td>28 min</td><td>0.4 / min</td><td>0</td></tr>
+        </table>
+        <div class="ins-section-label">ACTIONABLE ITEMS</div>
+        <ul>
+          <li>Review storm compression timing — if the zone shrinks too slowly, players avoid combat indefinitely</li>
+          <li>Compare loot density per square metre between maps — fewer chests means fewer convergence points</li>
+          <li>Check for long open sightlines that punish traversal and encourage passive play</li>
+        </ul>
+        <div class="ins-metrics">
+          <span class="ins-metric-label">METRICS AFFECTED</span>
+          Average match duration · Time-to-first-kill · Storm death rate · Kills per match
+        </div>
+      </div>
+    </div>
+
+    <div class="ins-card">
+      <div class="ins-card-num">04</div>
+      <div class="ins-card-content">
+        <div class="ins-card-title">One player dominates by barely moving — likely a camp spot</div>
+        <div class="ins-tag tag-med">MEDIUM CONFIDENCE</div>
+        <div class="ins-section-label">WHAT THE DATA SHOWS</div>
+        <p>Player <code>2c551757</code> went <strong>6 kills, 0 deaths across 3 sessions</strong>. Their movement range in one session was just <strong>7 pixels wide</strong> on the minimap — roughly 6 world units. They aren't roaming. They're anchoring one spot and winning every time.</p>
+        <table class="ins-table">
+          <tr><th>Session</th><th>K</th><th>D</th><th>Loot</th><th>X movement</th></tr>
+          <tr><td>363f3851</td><td>2</td><td>0</td><td>4</td><td>26 px</td></tr>
+          <tr><td>39a88d87</td><td>2</td><td>0</td><td>4</td><td>66 px</td></tr>
+          <tr><td>e325a53a</td><td>2</td><td>0</td><td>5</td><td style="color:var(--kill)">7 px</td></tr>
+        </table>
+        <div class="ins-section-label">ACTIONABLE ITEMS</div>
+        <ul>
+          <li>Cross-reference this player's coordinates across sessions — if they cluster to the same world location, that's a confirmed spot</li>
+          <li>Look at the geometry there: single-entry cover? Wide angle window? Uncontestable height?</li>
+          <li>Fix options: second entry point, destructible cover, flank route, or pull loot to force a different approach angle</li>
+        </ul>
+        <div class="ins-metrics">
+          <span class="ins-metric-label">METRICS AFFECTED</span>
+          Position variance over time · Kills per map area · Camp detection rate
+        </div>
+      </div>
+    </div>
+
+    <div class="ins-card">
+      <div class="ins-card-num">05</div>
+      <div class="ins-card-content">
+        <div class="ins-card-title">The storm is not creating pressure</div>
+        <div class="ins-tag tag-high">HIGH CONFIDENCE</div>
+        <div class="ins-section-label">WHAT THE DATA SHOWS</div>
+        <p>Across all 20 sessions and 220+ events, there is <strong>exactly 1 storm death</strong>. Players are dying to each other 23× more than to the storm. Storm death rate: <strong>~3% of all deaths</strong>.</p>
+        <div class="ins-storm-bar">
+          <div class="ins-storm-kill" style="width:96%">Player kills: 23</div>
+          <div class="ins-storm-storm" style="width:4%">Storm: 1</div>
+        </div>
+        <div class="ins-section-label">ACTIONABLE ITEMS</div>
+        <ul>
+          <li>Reduce storm warning time or increase early-phase contraction speed</li>
+          <li>Check storm damage output — if players can tank it for 30 seconds, it's not threatening</li>
+          <li>Tighten the final circle — if the endgame zone is too large, players can still avoid each other at the end</li>
+        </ul>
+        <div class="ins-metrics">
+          <span class="ins-metric-label">METRICS AFFECTED</span>
+          Storm deaths per match · Distance from edge at match end · Time spent outside zone
+        </div>
+      </div>
+    </div>
+
+    <div class="ins-footer">
+      <em>Generated from 5 days of production telemetry (Feb 10–14, 2026) · 20 sessions · 9 players · AmbroseValley + Lockdown · Expand to full 1,243-session dataset to raise confidence on insights 3 and 4.</em>
+    </div>
+
+  </div><!-- .ins-body -->
+</div><!-- #insights-panel -->
 
 <script type="module">
 import { init } from './js/app.js';

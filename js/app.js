@@ -598,6 +598,125 @@ function buildPublicAPI() {
       fullRender();
     },
 
+    toggleInsights() {
+      const panel    = document.getElementById('insights-panel');
+      const backdrop = document.getElementById('insights-backdrop');
+      const isOpen   = panel.classList.contains('open');
+      panel.classList.toggle('open', !isOpen);
+      backdrop.classList.toggle('open', !isOpen);
+    },
+
+    downloadInsights() {
+      const md = `# LILA BLACK — Design Insights
+Generated from 5 days of production telemetry (Feb 10–14, 2026)
+20 sessions · 9 players · AmbroseValley + Lockdown · 220 events
+
+---
+
+## Insight 1 — Loot is the fight trigger, not position or rotation
+
+**Confidence:** High
+
+**What the data shows**
+Every single kill hotzone cell overlaps with a loot hotzone cell — 12 out of 12, 100% overlap. The top kill cluster (world X: 56–100, Z: 110–129) accounts for 22% of all kills and 18% of all loot pickups. Kill cell ranking and loot cell ranking track almost identically across the map.
+
+**What this means**
+Players aren't fighting over angles or high ground. They're colliding because they're going for the same chest. Combat is loot-driven, not position-driven.
+
+**Actionable items**
+- Redistribute high-value loot into low-traffic zones to spread fights across the map
+- Reduce loot density in the top hotzone to lower forced collision rate
+- Audit whether the top hotzone is a deliberate POI or a side effect of spawner placement
+
+**Metrics affected:** Kill spread across map · Average engagement distance · Time-to-first-contact
+
+---
+
+## Insight 2 — The right half of AmbroseValley is a dead zone
+
+**Confidence:** High
+
+**What the data shows**
+The right half of the map (px > 512) accounts for only 37.5% of all events. The top-right quadrant registers zero activity — no positions, no kills, no loot pickups.
+
+Quadrant traffic (NW origin):
+  0  |  2  |  2  |  0
+  8  | 14  | 22  |  0
+  4  | 11  |  0  |  0
+  1  |  1  |  0  |  0
+
+**Actionable items**
+- Add a high-value loot spawn or landmark on the right side
+- Check sightlines from the active centre — exposed crossings with no cover kill traversal
+- Walk the right side and ask: what is the pull?
+
+**Metrics affected:** Event distribution by quadrant · Average path length · Zone utilisation rate
+
+---
+
+## Insight 3 — Lockdown is dramatically slower — no kills in 28 minutes
+
+**Confidence:** Medium (single session sample)
+
+**What the data shows**
+The one timed Lockdown session ran for 28 minutes at 0.4 events/min. AmbroseValley sessions average 10–11 minutes at 1.0–1.2 events/min — 3× the activity rate. Zero kills and zero deaths in the Lockdown session.
+
+**Actionable items**
+- Review storm compression timing — slow zones let players avoid combat indefinitely
+- Compare loot density per square metre between maps
+- Check for long open sightlines that punish traversal and reward passive play
+
+**Metrics affected:** Average match duration · Time-to-first-kill · Storm death rate · Kills per match
+
+---
+
+## Insight 4 — One player dominates by barely moving — likely a camp spot
+
+**Confidence:** Medium (single player sample)
+
+**What the data shows**
+Player 2c551757 went 6 kills / 0 deaths across 3 sessions. Movement range in one session: 7 pixels wide on the minimap (~6 world units). They are anchoring one spot and winning every time.
+
+Session breakdown:
+  363f3851: K=2 D=0 Loot=4 X-movement=26px
+  39a88d87: K=2 D=0 Loot=4 X-movement=66px
+  e325a53a: K=2 D=0 Loot=5 X-movement=7px
+
+**Actionable items**
+- Cross-reference coordinates across sessions to confirm the exact spot
+- Look at geometry: single entry? Wide angle? Uncontestable height advantage?
+- Fix: second entry point, destructible cover, or flank route
+
+**Metrics affected:** Position variance over time · Kills per map area · Camp detection rate
+
+---
+
+## Insight 5 — The storm is not creating pressure
+
+**Confidence:** High
+
+**What the data shows**
+Across all 20 sessions, there is exactly 1 storm death vs 23 player kills. Storm death rate: ~3% of all deaths. Players are dying to each other 23× more than to the storm.
+
+**Actionable items**
+- Reduce storm warning time or increase early-phase contraction speed
+- Check storm damage output — if players can tank it for 30 seconds, it is not threatening
+- Tighten the final circle size
+
+**Metrics affected:** Storm deaths per match · Distance from storm edge at match end · Time spent outside zone
+
+---
+
+*Note: Insights 3 and 4 are medium confidence due to small sample size. Expand to the full 1,243-session dataset to raise confidence.*
+`;
+      const blob = new Blob([md], { type: 'text/markdown' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'LILA_BLACK_INSIGHTS.md';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    },
+
     exportPng() {
       const out = document.createElement('canvas');
       const main = document.getElementById('main-canvas');
