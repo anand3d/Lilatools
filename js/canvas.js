@@ -156,31 +156,21 @@ export class MapRenderer {
   get W() { return this.canvas.width; }
   get H() { return this.canvas.height; }
 
-  // Base scale: screen pixels per map pixel at zoom=1.
-  // All minimaps are 1024x1024. Image is letterboxed so sc = min(W,H)/1024.
-  get _sc() { return Math.min(this.W, this.H) / 1024; }
+  // _imgRect: the actual screen rect the minimap image is drawn into.
+  // Set during render() so toScreen/fromScreen always match the drawn image.
+  // { x, y, w, h } — top-left origin + drawn dimensions.
+  _imgRect = { x: 0, y: 0, w: 1, h: 1 };
 
-  // Top-left screen position of the rendered map image.
-  get _imgOrigin() {
-    const d = 1024 * this._sc * this.cam.zoom;
-    return {
-      x: (this.W - d) / 2 + this.cam.x,
-      y: (this.H - d) / 2 + this.cam.y,
-    };
-  }
-
-  // Map pixel [0-1024] -> screen pixel (accounts for letterbox + pan + zoom)
+  // Map pixel [0-1024] -> screen pixel
   toScreen(px, py) {
-    const { x: ox, y: oy } = this._imgOrigin;
-    const s = this._sc * this.cam.zoom;
-    return { sx: ox + px * s, sy: oy + py * s };
+    const { x, y, w, h } = this._imgRect;
+    return { sx: x + (px / 1024) * w, sy: y + (py / 1024) * h };
   }
 
   // Screen pixel -> map pixel [0-1024]
   fromScreen(sx, sy) {
-    const { x: ox, y: oy } = this._imgOrigin;
-    const s = this._sc * this.cam.zoom;
-    return { px: (sx - ox) / s, py: (sy - oy) / s };
+    const { x, y, w, h } = this._imgRect;
+    return { px: (sx - x) / w * 1024, py: (sy - y) / h * 1024 };
   }
 
   // Map pixel -> world coord
@@ -215,6 +205,8 @@ export class MapRenderer {
       const dh = ih * sc * this.cam.zoom;
       const dx = (W - dw) / 2 + this.cam.x;
       const dy = (H - dh) / 2 + this.cam.y;
+      // Store exact drawn rect — toScreen/fromScreen read this to stay in sync
+      this._imgRect = { x: dx, y: dy, w: dw, h: dh };
       ctx.drawImage(this.mapImage, dx, dy, dw, dh);
       ctx.fillStyle = 'rgba(0,0,0,.12)';
       ctx.fillRect(dx, dy, dw, dh);
@@ -222,6 +214,8 @@ export class MapRenderer {
       ctx.fillStyle = '#080a0d';
       ctx.fillRect(0, 0, W, H);
       this._drawGrid();
+      // Fallback rect: fill canvas
+      this._imgRect = { x: 0, y: 0, w: W, h: H };
     }
 
     if (!sessions.length) return;
@@ -343,7 +337,8 @@ export class MapRenderer {
     const off = document.createElement('canvas');
     off.width = W; off.height = H;
     const oc  = off.getContext('2d');
-    const r   = heatRadius * this.cam.zoom;
+    // Scale radius relative to how large the image is on screen (w/2000 = pixels per world-unit)
+    const r   = heatRadius * (this._imgRect.w / 2000) * 10;
 
     pts.forEach(pt => {
       const { sx, sy } = this.toScreen(pt.px, pt.py);

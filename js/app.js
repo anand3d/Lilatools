@@ -415,20 +415,19 @@ function wireCanvasInteraction() {
     const rect = cv.getBoundingClientRect();
     const mx = e.clientX - rect.left, my = e.clientY - rect.top;
     const factor = e.deltaY < 0 ? 1.12 : 0.89;
-    const oz = renderer.cam.zoom;
-    const nz = Math.max(0.05, Math.min(14, oz * factor));
-    const sc = renderer._sc;
+    const nz = Math.max(0.05, Math.min(14, renderer.cam.zoom * factor));
 
-    // Find the map pixel currently under the cursor
-    const oxOld = (renderer.W - 1024 * sc * oz) / 2 + renderer.cam.x;
-    const oyOld = (renderer.H - 1024 * sc * oz) / 2 + renderer.cam.y;
-    const pxCursor = (mx - oxOld) / (sc * oz);
-    const pyCursor = (my - oyOld) / (sc * oz);
+    // Find map pixel under cursor using current _imgRect, then re-center after zoom
+    const { x: ix, y: iy, w: iw, h: ih } = renderer._imgRect;
+    const mapPx = (mx - ix) / iw;  // 0-1 normalised
+    const mapPy = (my - iy) / ih;
 
-    // After zoom, keep that map pixel under the cursor
     renderer.cam.zoom = nz;
-    renderer.cam.x = mx - pxCursor * sc * nz - (renderer.W - 1024 * sc * nz) / 2;
-    renderer.cam.y = my - pyCursor * sc * nz - (renderer.H - 1024 * sc * nz) / 2;
+    // Trigger a dry render to get the new _imgRect, then correct pan
+    renderFrame();
+    const { w: nw, h: nh } = renderer._imgRect;
+    renderer.cam.x += mx - (renderer._imgRect.x + mapPx * nw);
+    renderer.cam.y += my - (renderer._imgRect.y + mapPy * nh);
 
     if (heatmapMode !== 'off') renderer.buildHeatmap(activeSessions(), heatmapMode);
     renderFrame();
@@ -555,17 +554,18 @@ function buildPublicAPI() {
 
     panToWorld(wx, wz, mapId) {
       const cfg = MAP_CONFIGS[mapId] || MAP_CONFIGS.AmbroseValley;
-      const px = ((wx - cfg.ox) / cfg.scale) * 1024;
+      const px = ((wx - cfg.ox) / cfg.scale) * 1024;  // map pixel 0-1024
       const py = (1  - (wz - cfg.oz) / cfg.scale) * 1024;
-      // Zoom in a bit, then centre the target map pixel on screen
       renderer.cam.zoom = Math.min(renderer.cam.zoom * 1.5, 4);
-      const sc = renderer._sc;
-      const nz = renderer.cam.zoom;
+      // Render once to get updated _imgRect at new zoom, then correct pan
+      renderFrame();
+      const { x: ix, y: iy, w: iw, h: ih } = renderer._imgRect;
+      const sx = ix + (px / 1024) * iw;
+      const sy = iy + (py / 1024) * ih;
       const cx = renderer.canvas.width  / 2;
       const cy = renderer.canvas.height / 2;
-      // Set pan so target pixel lands at canvas centre
-      renderer.cam.x = cx - px * sc * nz - (renderer.canvas.width  - 1024 * sc * nz) / 2;
-      renderer.cam.y = cy - py * sc * nz - (renderer.canvas.height - 1024 * sc * nz) / 2;
+      renderer.cam.x += cx - sx;
+      renderer.cam.y += cy - sy;
       if (heatmapMode !== 'off') renderer.buildHeatmap(activeSessions(), heatmapMode);
       renderFrame();
     },
