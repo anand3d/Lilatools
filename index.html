@@ -160,6 +160,12 @@
 <!-- ══ RIGHT PANEL ═══════════════════════════════════════════════════════════════ -->
 <aside class="right">
 
+  <!-- Session filter -->
+  <div class="panel-section">
+    <div class="panel-label">FILTER BY DATE</div>
+    <div id="date-filter-list" class="date-filter-list"></div>
+  </div>
+
   <!-- Event type filters -->
   <div class="panel-section">
     <div class="panel-label" style="display:flex;justify-content:space-between">
@@ -174,41 +180,31 @@
 
   <!-- Layers -->
   <div class="panel-section">
-    <div class="panel-label">LAYERS</div>
-    <div class="layer-row">
-      <span>Paths</span>
-      <button id="layer-paths"     class="tog on" onclick="App.toggleLayer('paths')">ON</button>
+    <div class="panel-label" style="display:flex;justify-content:space-between">
+      LAYERS
+      <span style="display:flex;gap:4px">
+        <span class="lnk" onclick="App.setAllLayers(true)">all</span>
+        <span class="lnk" onclick="App.setAllLayers(false)">none</span>
+      </span>
     </div>
-    <div class="layer-row">
-      <span>Direction arrows</span>
-      <button id="layer-arrows"    class="tog on" onclick="App.toggleLayer('arrows')">ON</button>
-    </div>
-    <div class="layer-row">
-      <span>Positions</span>
-      <button id="layer-positions" class="tog on" onclick="App.toggleLayer('positions')">ON</button>
-    </div>
-    <div class="layer-row">
-      <span>Kills</span>
-      <button id="layer-kills"     class="tog on" onclick="App.toggleLayer('kills')">ON</button>
-    </div>
-    <div class="layer-row">
-      <span>Loot</span>
-      <button id="layer-loot"      class="tog on" onclick="App.toggleLayer('loot')">ON</button>
-    </div>
-    <div class="layer-row">
-      <span>Deaths</span>
-      <button id="layer-deaths"    class="tog on" onclick="App.toggleLayer('deaths')">ON</button>
+    <div class="layer-pills">
+      <div id="layer-paths"     class="lpill on" style="--lc:#b0c0d4" onclick="App.toggleLayer('paths')">Paths</div>
+      <div id="layer-arrows"    class="lpill on" style="--lc:#b0c0d4" onclick="App.toggleLayer('arrows')">Arrows</div>
+      <div id="layer-positions" class="lpill on" style="--lc:#00d4f0" onclick="App.toggleLayer('positions')">Positions</div>
+      <div id="layer-kills"     class="lpill on" style="--lc:#ff2244" onclick="App.toggleLayer('kills')">Kills</div>
+      <div id="layer-loot"      class="lpill on" style="--lc:#f0c020" onclick="App.toggleLayer('loot')">Loot</div>
+      <div id="layer-deaths"    class="lpill on" style="--lc:#b040ff" onclick="App.toggleLayer('deaths')">Deaths</div>
     </div>
   </div>
 
   <!-- Heatmap -->
   <div class="panel-section">
     <div class="panel-label">HEATMAP</div>
-    <div class="btn-row">
-      <button id="hm-off"     class="smolbtn active" onclick="App.setHeatmap('off')">OFF</button>
-      <button id="hm-traffic" class="smolbtn"        onclick="App.setHeatmap('traffic')">TRAFFIC</button>
-      <button id="hm-kills"   class="smolbtn"        onclick="App.setHeatmap('kills')">KILLS</button>
-      <button id="hm-deaths"  class="smolbtn"        onclick="App.setHeatmap('deaths')">DEATHS</button>
+    <div class="hm-pills">
+      <div id="hm-off"     class="hmpill active"                        onclick="App.setHeatmap('off')">OFF</div>
+      <div id="hm-traffic" class="hmpill" style="--hc:rgba(0,212,240,.7)"  onclick="App.setHeatmap('traffic')">TRAFFIC</div>
+      <div id="hm-kills"   class="hmpill" style="--hc:rgba(255,34,68,.7)"  onclick="App.setHeatmap('kills')">KILLS</div>
+      <div id="hm-deaths"  class="hmpill" style="--hc:rgba(176,64,255,.7)" onclick="App.setHeatmap('deaths')">DEATHS</div>
     </div>
     <div class="slider-row" style="margin-top:8px">
       <span>Opacity</span>

@@ -81,6 +81,7 @@ function activeSessions(matchOverride) {
   return sessions.filter(s => {
     if (s.map_id !== activeMap) return false;
     if (match && s.mid !== match) return false;
+    if (window._hiddenMids && window._hiddenMids.has(s.mid)) return false;
     if (playerFilter === 'human' && s.is_bot) return false;
     if (playerFilter === 'bot'   && !s.is_bot) return false;
     return playerMap[s.uid]?.on !== false;
@@ -184,6 +185,7 @@ function rebuildUI() {
   buildLegend();
   syncHeatmapButtons();
   updateMapInfo();
+  buildDateFilter();
   buildCompareSelectorB();
   fullRender();
 }
@@ -273,6 +275,46 @@ function syncHeatmapButtons() {
     const btn = document.getElementById(`hm-${mode}`);
     if (btn) btn.classList.toggle('active', heatmapMode === mode);
   });
+}
+
+function buildDateFilter() {
+  const el = document.getElementById('date-filter-list');
+  if (!el) return;
+
+  // Extract unique dates from sessions on current map
+  const mapSessions = sessions.filter(s => s.map_id === activeMap);
+  const dateMap = {};
+  mapSessions.forEach(s => {
+    // Use first timestamp if available, else fall back to mid prefix
+    let dateKey = 'Unknown';
+    const tsEvents = s.events.filter(e => e.ts_rel != null);
+    if (tsEvents.length && s.hasTs) {
+      // ts_rel is microseconds from epoch
+      const firstTs = Math.min(...tsEvents.map(e => e.ts_rel));
+      // sessions.json ts_rel is relative so we can't get absolute date easily
+      // Use session mid prefix as a proxy grouping
+      dateKey = s.mid.slice(0, 8);
+    } else {
+      dateKey = s.mid.slice(0, 8);
+    }
+    if (!dateMap[dateKey]) dateMap[dateKey] = { sessions: [], on: true };
+    dateMap[dateKey].sessions.push(s.mid);
+  });
+
+  if (!Object.keys(dateMap).length) {
+    el.innerHTML = '<div style="font-size:8px;color:var(--muted)">No sessions loaded</div>';
+    return;
+  }
+
+  el.innerHTML = Object.entries(dateMap).map(([key, info]) => `
+    <div class="date-pill${info.on ? '' : ' off'}" onclick="App.toggleDateGroup('${key}')">
+      <div class="date-dot"></div>
+      <span class="date-label">${key}</span>
+      <span class="date-count">${info.sessions.length} session${info.sessions.length !== 1 ? 's' : ''}</span>
+    </div>`).join('');
+
+  // Store dateMap globally for toggle
+  window._dateMap = dateMap;
 }
 
 function updateMapInfo() {
@@ -624,10 +666,35 @@ function buildPublicAPI() {
       renderFrame();
     },
 
+    toggleDateGroup(key) {
+      if (!window._dateMap || !window._dateMap[key]) return;
+      const group = window._dateMap[key];
+      group.on = !group.on;
+      // Toggle sessions in this group by adding/removing their mids from a filter
+      if (!window._hiddenMids) window._hiddenMids = new Set();
+      group.sessions.forEach(mid => {
+        group.on ? window._hiddenMids.delete(mid) : window._hiddenMids.add(mid);
+      });
+      // Rebuild date filter UI
+      buildDateFilter();
+      // Re-filter activeSessions to respect hidden mids
+      renderFrame();
+    },
+
     toggleLayer(key) {
       renderer.layers[key] = !renderer.layers[key];
-      const tog = document.getElementById(`layer-${key}`);
-      if (tog) tog.classList.toggle('on', renderer.layers[key]);
+      const pill = document.getElementById(`layer-${key}`);
+      if (pill) pill.classList.toggle('on', renderer.layers[key]);
+      renderFrame();
+    },
+
+    setAllLayers(on) {
+      Object.keys(renderer.layers).forEach(key => {
+        if (key === 'heatmap') return; // heatmap handled separately
+        renderer.layers[key] = on;
+        const pill = document.getElementById(`layer-${key}`);
+        if (pill) pill.classList.toggle('on', on);
+      });
       renderFrame();
     },
 

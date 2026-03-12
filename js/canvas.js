@@ -387,14 +387,17 @@ export class MapRenderer {
       oc.fillRect(sx - r, sy - r, r * 2, r * 2);
     });
 
-    // Colorize: intensity → heatmap color
+    // Colorize: intensity → mode-specific color ramp
+    const colorFn = mode === 'kills'  ? _heatColorKills
+                  : mode === 'deaths' ? _heatColorDeaths
+                  : _heatColor; // traffic: blue→green→red
     const id = oc.getImageData(0, 0, W, H), d = id.data;
     for (let i = 0; i < d.length; i += 4) {
       const t = d[i] / 255;
       if (!t) { d[i + 3] = 0; continue; }
-      const [r2, g2, b2] = _heatColor(Math.min(t, 1));
+      const [r2, g2, b2] = colorFn(Math.min(t, 1));
       d[i] = r2; d[i+1] = g2; d[i+2] = b2;
-      d[i+3] = Math.min(255, t * 260);
+      d[i+3] = Math.min(255, t * 280);
     }
     hx.putImageData(id, 0, 0);
   }
@@ -497,21 +500,50 @@ export class MapRenderer {
   }
 }
 
-// ─── Heatmap color ramp ─────────────────────────────────────────────────────
+// ─── Heatmap color ramps ────────────────────────────────────────────────────
+
+/** Traffic: cool blue → green → hot red */
 function _heatColor(t) {
   const stops = [
-    [0,    [0,   0,   180]],
-    [0.2,  [0,   0,   255]],
-    [0.4,  [0,   220, 255]],
-    [0.55, [0,   255, 80 ]],
-    [0.7,  [255, 255, 0  ]],
-    [1.0,  [255, 0,   0  ]],
+    [0,    [0,   20,  180]],
+    [0.25, [0,   100, 255]],
+    [0.5,  [0,   220, 120]],
+    [0.75, [255, 220, 0  ]],
+    [1.0,  [255, 30,  0  ]],
   ];
+  return _lerpStops(stops, t);
+}
+
+/** Kills: black → deep red → bright orange → yellow-white */
+function _heatColorKills(t) {
+  const stops = [
+    [0,    [80,  0,   0  ]],
+    [0.3,  [200, 0,   0  ]],
+    [0.6,  [255, 80,  0  ]],
+    [0.85, [255, 200, 0  ]],
+    [1.0,  [255, 255, 180]],
+  ];
+  return _lerpStops(stops, t);
+}
+
+/** Deaths: black → deep purple → violet → pink-white */
+function _heatColorDeaths(t) {
+  const stops = [
+    [0,    [30,  0,   60 ]],
+    [0.3,  [120, 0,   200]],
+    [0.6,  [200, 60,  255]],
+    [0.85, [255, 140, 255]],
+    [1.0,  [255, 220, 255]],
+  ];
+  return _lerpStops(stops, t);
+}
+
+function _lerpStops(stops, t) {
   for (let i = 0; i < stops.length - 1; i++) {
-    if (t >= stops[i][0] && t <= stops[i + 1][0]) {
-      const f = (t - stops[i][0]) / (stops[i + 1][0] - stops[i][0]);
-      return stops[i][1].map((c, j) => Math.round(c + f * (stops[i + 1][1][j] - c)));
+    if (t >= stops[i][0] && t <= stops[i+1][0]) {
+      const f = (t - stops[i][0]) / (stops[i+1][0] - stops[i][0]);
+      return stops[i][1].map((c, j) => Math.round(c + f * (stops[i+1][1][j] - c)));
     }
   }
-  return [255, 0, 0];
+  return stops[stops.length-1][1];
 }
