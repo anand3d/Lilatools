@@ -13,8 +13,8 @@ A browser-based visualization tool for exploring player behavior across LILA BLA
 - Heatmap overlays: traffic density, kill zones, death zones
 - Timeline playback: scrub through a match or hit play and watch it unfold
 - Filter by map, match, player type, or individual event type
-- Kill hotzone list — click any hotzone to pan the map to that location
-- Drag-and-drop additional `.nakama-0` files directly onto the map — parsed in-browser, no upload needed
+- Kill hotzone list: click any hotzone to pan the map to that location
+- Drag-and-drop additional `.nakama-0` files directly onto the map - parsed in-browser, no upload needed
 - Export the current view as a PNG
 
 ---
