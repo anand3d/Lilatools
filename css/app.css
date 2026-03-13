@@ -139,9 +139,9 @@ header {
 
 /* ── Left panel ───────────────────────────────────────── */
 .left {
-  grid-row: 3; grid-column: 1; display: flex; flex-direction: column;
+  grid-row: 3; grid-column: 1;
   background: var(--s1); border-right: 1px solid var(--border);
-  overflow-y: auto; min-height: 0;
+  overflow-y: auto; overflow-x: hidden;
 }
 .left::-webkit-scrollbar { width: 3px; }
 .left::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 2px; }
@@ -181,9 +181,9 @@ header {
 
 /* ── Right panel ──────────────────────────────────────── */
 .right {
-  grid-row: 3; grid-column: 3; display: flex; flex-direction: column;
+  grid-row: 3; grid-column: 3;
   background: var(--s1); border-left: 1px solid var(--border);
-  overflow-y: auto; min-height: 0;
+  overflow-y: auto; overflow-x: hidden;
 }
 .right::-webkit-scrollbar { width: 3px; }
 .right::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 2px; }
@@ -191,13 +191,8 @@ header {
 /* ── Shared panel sections ────────────────────────────── */
 .panel-section {
   border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
 }
-.panel-section.scrollable {
-  flex: 1; overflow-y: auto; min-height: 0;
-}
-.panel-section.scrollable::-webkit-scrollbar { width: 2px; }
-.panel-section.scrollable::-webkit-scrollbar-thumb { background: var(--dim); }
+
 .panel-label {
   font-size: 7px; letter-spacing: 2.5px; color: var(--dim);
   text-transform: uppercase; padding: 7px 12px 4px;
