@@ -2,7 +2,7 @@
 
 A browser-based visualization tool for exploring player behavior across LILA BLACK battle-royale maps. Built for level designers, not data scientists.
 
-**Live demo:** https://[your-username].github.io/lilatools/
+**Live demo:** https://anand3d.github.io/lilatools/
 
 ---
 
@@ -60,13 +60,13 @@ Python 3.8+, stdlib only — no numpy, no pyarrow required
 git init
 git add .
 git commit -m "LILA BLACK telemetry tool"
-git remote add origin git@github.com:USERNAME/lilatools.git
+git remote add origin git@github.com:anand3d/lilatools.git
 git push -u origin main
 
 # In repo Settings → Pages → Source: Deploy from branch → main → / (root)
 ```
 
-The tool will be live at `https://USERNAME.github.io/lilatools/` within ~60 seconds.
+The tool will be live at `https://anand3d.github.io/lilatools/` within ~60 seconds.
 
 ---
 
